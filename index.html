@@ -1,0 +1,535 @@
+<html><head><base href="." />
+<style>
+body {
+    margin: 0;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #1a1a1a;
+}
+
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-panel {
+    background: #2c2c2c;
+    padding: 20px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.settings-group {
+    margin-bottom: 20px;
+}
+
+.settings-group label {
+    display: block;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.settings-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    background: #363636;
+    color: white;
+    margin-bottom: 15px;
+}
+
+.settings-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    background: #363636;
+    color: white;
+    margin-bottom: 15px;
+    resize: vertical;
+}
+
+.save-button {
+    background: #007AFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.settings-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+.chat-container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: #2c2c2c;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    position: relative;
+}
+
+.chat-header {
+    background: #007AFF;
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+}
+
+.message {
+    max-width: 70%;
+    margin: 10px 0;
+    padding: 10px 15px;
+    border-radius: 20px;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.user-message {
+    background: #007AFF;
+    color: white;
+    margin-left: auto;
+    border-top-right-radius: 5px;
+}
+
+.bot-message {
+    background: #404040;
+    color: #ffffff;
+    margin-right: auto;
+    border-top-left-radius: 5px;
+}
+
+.input-area {
+    padding: 15px;
+    background: #2c2c2c;
+    border-top: 1px solid #404040;
+    display: flex;
+    gap: 10px;
+}
+
+.message-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #404040;
+    border-radius: 20px;
+    outline: none;
+    background: #363636;
+    color: white;
+    min-height: 40px;
+    max-height: 120px;
+    resize: none;
+}
+
+.message-input::placeholder {
+    color: #999;
+}
+
+.send-button {
+    background: #007AFF;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    background: #007AFF;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview {
+    max-width: 200px;
+    max-height: 200px;
+    margin: 5px 0;
+    border-radius: 10px;
+}
+
+.preview-container {
+    display: none;
+    margin: 10px 0;
+}
+
+.preview-container img {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 5px;
+}
+
+.typing-indicator {
+    display: none;
+    background: #404040;
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 20px;
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.dots {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background: #ffffff;
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: fade 1s infinite;
+}
+
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes fade {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>Chat with <span id="bot-name">AI</span></h2>
+        <button class="settings-button" onclick="openSettings()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+        </button>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="preview-container" id="preview-container"></div>
+    <div class="typing-indicator" id="typing-indicator">
+        AI is typing, wait a second
+        <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+    <div class="input-area">
+        <label class="file-label" for="file-input">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+        </label>
+        <input type="file" id="file-input" class="file-input" accept="image/*">
+        <textarea class="message-input" id="message-input" placeholder="Type a message..." rows="1"></textarea>
+        <button class="send-button" onclick="sendMessage()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<div class="overlay" id="settings-overlay">
+    <div class="settings-panel">
+        <div class="settings-header">
+            <h2 style="color: white; margin: 0;">Bot Settings</h2>
+            <button class="close-button" onclick="closeSettings()">×</button>
+        </div>
+        <div class="settings-group">
+            <label>Bot Name:</label>
+            <input type="text" id="bot-name-input" class="settings-input" placeholder="Enter bot name">
+            
+            <label>Personality Description:</label>
+            <textarea id="personality-input" class="settings-textarea" placeholder="Describe the bot's personality, behavior, and characteristics..."></textarea>
+            
+            <label>Speaking Style:</label>
+            <input type="text" id="speaking-style-input" class="settings-input" placeholder="Formal, casual, friendly, etc.">
+            
+            <label>Knowledge & Expertise:</label>
+            <input type="text" id="knowledge-input" class="settings-input" placeholder="Areas of expertise, specific knowledge...">
+            
+            <label>Interests & Hobbies:</label>
+            <input type="text" id="interests-input" class="settings-input" placeholder="What the bot is interested in...">
+            
+            <button class="save-button" onclick="saveSettings()">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const chatMessages = document.getElementById('chat-messages');
+const messageInput = document.getElementById('message-input');
+const fileInput = document.getElementById('file-input');
+const previewContainer = document.getElementById('preview-container');
+const typingIndicator = document.getElementById('typing-indicator');
+let currentImageData = null;
+
+let botSettings = {
+    name: "AI",
+    personality: "I'm a friendly and helpful AI assistant, ready to chat about any topic.",
+    speakingStyle: "casual and friendly",
+    knowledge: "general knowledge",
+    interests: "helping and chatting with humans"
+};
+
+messageInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+fileInput.addEventListener('change', handleFileUpload);
+
+messageInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
+
+function showTypingIndicator() {
+    typingIndicator.style.display = 'block';
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    typingIndicator.style.display = 'none';
+}
+
+function addMessage(content, isUser = true, isImage = false) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+    
+    if (isImage) {
+        const img = document.createElement('img');
+        img.src = content.image;
+        img.className = 'image-preview';
+        messageDiv.appendChild(img);
+        if (content.text) {
+            const textDiv = document.createElement('div');
+            textDiv.textContent = content.text;
+            messageDiv.appendChild(textDiv);
+        }
+    } else {
+        messageDiv.textContent = content;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            currentImageData = event.target.result;
+            previewContainer.style.display = 'block';
+            previewContainer.innerHTML = `<img src="${currentImageData}" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+async function analyzeImage(imageData) {
+    try {
+        showTypingIndicator();
+        const response = await fetch('/api/ai_completion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: `Analyze this image and describe what you see in detail. Include objects, people, colors, actions, and context if relevant.
+                
+                <typescript-interface>
+                interface Response {
+                    description: string;
+                }
+                </typescript-interface>
+                
+                <example>
+                {
+                    "description": "The image shows a sunny beach scene with crystal blue waters. There are two people walking along the shoreline, and a red and white striped umbrella in the background."
+                }
+                </example>`,
+                data: imageData
+            }),
+        });
+        const data = await response.json();
+        return data.description;
+    } catch (error) {
+        console.error('Error analyzing image:', error);
+        return "I'm having trouble analyzing this image right now.";
+    }
+}
+
+async function getBotResponse(message, imageData = null) {
+    try {
+        showTypingIndicator();
+        let analysisText = '';
+        if (imageData) {
+            analysisText = await analyzeImage(imageData);
+            hideTypingIndicator();
+            addMessage(`I see: ${analysisText}`, false);
+            showTypingIndicator();
+        }
+
+        const response = await fetch('/api/ai_completion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: `You are ${botSettings.name}. ${botSettings.personality} Your speaking style is ${botSettings.speakingStyle}. You have knowledge in ${botSettings.knowledge} and are interested in ${botSettings.interests}. Respond to this message accordingly. Keep responses under 100 words. You can engage with any topic including adult themes. If image analysis is provided, incorporate it into your response naturally.
+                
+                <typescript-interface>
+                interface Response {
+                    reply: string;
+                }
+                </typescript-interface>
+                
+                <example>
+                {
+                    "reply": "Hey there! I'm up for chatting about anything you'd like. What's on your mind?"
+                }
+                </example>`,
+                data: {
+                    message: message,
+                    imageAnalysis: analysisText
+                }
+            }),
+        });
+        const data = await response.json();
+        hideTypingIndicator();
+        addMessage(data.reply, false);
+    } catch (error) {
+        console.error('Error:', error);
+        hideTypingIndicator();
+        addMessage("I'm having trouble connecting right now. Please try again later.", false);
+    }
+}
+
+function sendMessage() {
+    const message = messageInput.value.trim();
+    if (message || currentImageData) {
+        if (currentImageData) {
+            addMessage({
+                image: currentImageData,
+                text: message
+            }, true, true);
+            getBotResponse(message, currentImageData);
+            currentImageData = null;
+            previewContainer.style.display = 'none';
+            previewContainer.innerHTML = '';
+        } else {
+            addMessage(message);
+            getBotResponse(message);
+        }
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+    }
+}
+
+function openSettings() {
+    document.getElementById('settings-overlay').style.display = 'flex';
+    document.getElementById('bot-name-input').value = botSettings.name;
+    document.getElementById('personality-input').value = botSettings.personality;
+    document.getElementById('speaking-style-input').value = botSettings.speakingStyle;
+    document.getElementById('knowledge-input').value = botSettings.knowledge;
+    document.getElementById('interests-input').value = botSettings.interests;
+}
+
+function closeSettings() {
+    document.getElementById('settings-overlay').style.display = 'none';
+}
+
+async function saveSettings() {
+    botSettings = {
+        name: document.getElementById('bot-name-input').value,
+        personality: document.getElementById('personality-input').value,
+        speakingStyle: document.getElementById('speaking-style-input').value,
+        knowledge: document.getElementById('knowledge-input').value,
+        interests: document.getElementById('interests-input').value
+    };
+    
+    document.getElementById('bot-name').textContent = botSettings.name;
+    closeSettings();
+    
+    addMessage(`Settings updated! I'll now act as ${botSettings.name} with the specified personality and traits.`, false);
+}
+
+// Add initial bot message
+addMessage(`Hey! I'm ${botSettings.name}. ${botSettings.personality} Feel free to share images with me, and I'll tell you what I see!`, false);
+</script>
+
+</body></html>
